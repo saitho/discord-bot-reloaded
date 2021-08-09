@@ -60,6 +60,7 @@ export default class CommandLoader {
             "type": 1, // Sub command
             "name": subcommand.name,
             "description": subcommand.description,
+            "choices": subcommand.choices,
             "options": options
         }
     }
@@ -70,16 +71,16 @@ export default class CommandLoader {
         for (const cmd of this.commands.values()) {
             const mainCommandOptions: any[] = [];
             const groups = new Map<string, any>();
-            for (const subcmd of cmd.getSubCommands()) {
-                if (subcmd.group && subcmd.group.length) {
-                    if (!groups.has(subcmd.group)) {
-                        groups.set(subcmd.group, [])
+            for (const subCommand of cmd.getSubCommands()) {
+                if (subCommand.group && subCommand.group.length) {
+                    if (!groups.has(subCommand.group)) {
+                        groups.set(subCommand.group, [])
                     }
-                    const groupContent = groups.get(subcmd.group);
-                    groupContent.push(this.createCommandJson(subcmd));
-                    groups.set(subcmd.group, groupContent)
+                    const groupContent = groups.get(subCommand.group);
+                    groupContent.push(this.createCommandJson(subCommand));
+                    groups.set(subCommand.group, groupContent)
                 } else {
-                    mainCommandOptions.push(this.createCommandJson(subcmd))
+                    mainCommandOptions.push(this.createCommandJson(subCommand))
                 }
             }
 

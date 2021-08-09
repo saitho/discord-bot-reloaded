@@ -4,6 +4,7 @@ import {ButtonCallbackFunc, ButtonInteractionHandler} from "./button_interaction
 export interface ISubCommand {
     name: string;
     description: string;
+    choices: any[];
     group?: string;
     funcName: string;
     options: {name: string; description: string; type: number; required: boolean}[]

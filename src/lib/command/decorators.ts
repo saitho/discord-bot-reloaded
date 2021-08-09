@@ -40,7 +40,7 @@ export function group(group: string) {
     };
 }
 
-export function option(name: string, description: string, type: number, required = false) {
+export function option(name: string, description: string, type: number, required = false, choices = []) {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         target[SubMethods] = target[SubMethods] || new Map();
         const obj = target[SubMethods].get(propertyKey) ?? {};
@@ -50,7 +50,8 @@ export function option(name: string, description: string, type: number, required
             group,
             description,
             type,
-            required
+            required,
+            choices
         });
         target[SubMethods].set(propertyKey, obj);
     };

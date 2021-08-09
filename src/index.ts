@@ -6,9 +6,8 @@ const { token } = require('../config.json')
 // setup logger
 import {configure, getLogger} from "log4js";
 import {Client, Intents} from "discord.js";
-import {ButtonInteractionHandler} from "./lib/command/button_interaction_handler";
+import init from "./lib/command/init";
 import path from "path";
-import CommandLoader from "./lib/command/loader";
 
 configure({
     appenders: {
@@ -34,27 +33,7 @@ const bot = new Client({ intents: [Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.G
 
 
 bot.once('ready', async (client) => {
-
-    const buttonInteractionHandler = new ButtonInteractionHandler();
-    const commandLoader = new CommandLoader(client, buttonInteractionHandler);
-    commandLoader.loadCommands(path.join(__dirname, 'commands'))
-
-    if (process.env.PUBLISH_COMMANDS) {
-        // Register commands
-        await commandLoader.publishCommands();
-    }
-
-    // Slash command interactions
-    client.on('interactionCreate', async (interaction) => {
-        if (interaction.isButton()) {
-            await buttonInteractionHandler.handleButtonInteraction(interaction)
-            return
-        }
-        if (interaction.isCommand()) {
-            await commandLoader.resolveCommandInteraction(interaction)
-            return
-        }
-    });
+    await init(client, path.join(__dirname, 'commands'))
 
     await client.user.setPresence({
         activities: [
