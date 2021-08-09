@@ -4,7 +4,7 @@ import {ButtonCallbackFunc, ButtonInteractionHandler} from "./button_interaction
 export interface ISubCommand {
     name: string;
     description: string;
-    group: string;
+    group?: string;
     funcName: string;
     options: {name: string; description: string; type: number; required: boolean}[]
 }
@@ -16,8 +16,9 @@ export default abstract class AbstractCommand {
     protected commandName: string;
     protected commandDescription: string;
 
+    // do not initialize with empty array! filled by decorators (see decorators.ts)
     // key = method name, value = ISubCommand
-    protected subCommands: ISubCommand[] = [];
+    protected subCommands: ISubCommand[];
 
     constructor(client: Client, btnHandler: ButtonInteractionHandler) {
         this.client = client;
@@ -86,10 +87,9 @@ export default abstract class AbstractCommand {
     }
 
     public async processInteraction(interaction: CommandInteraction) {
-        // subCommands
         let funcName = '';
         for (const subCmd of this.getSubCommands()) {
-            if (interaction.options.getSubcommandGroup()) {
+            if (interaction.options.getSubcommandGroup(false)) {
                 if (interaction.options.getSubcommandGroup() !== subCmd.group) {
                     continue;
                 }

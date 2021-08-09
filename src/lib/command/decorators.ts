@@ -1,5 +1,3 @@
-import {ISubCommand} from "./command";
-
 const SubMethods = Symbol('SubMethods'); // just to be sure there won't be collisions
 
 export function description(description: string) {

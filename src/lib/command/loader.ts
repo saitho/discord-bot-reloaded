@@ -3,6 +3,7 @@ import path from "path";
 import AbstractCommand, {ISubCommand} from "./command";
 import {Client, CommandInteraction} from "discord.js";
 import {ButtonInteractionHandler} from "./button_interaction_handler";
+import {getLogger} from "log4js";
 
 export default class CommandLoader {
     protected client: Client;
@@ -98,6 +99,7 @@ export default class CommandLoader {
             });
         }
 
+        getLogger().info('Publishing commands to Discord.');
         await this.client.application!.commands.set(commands)
     }
 }
