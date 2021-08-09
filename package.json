@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "debug": "nodemon -e js,ts --watch src --exec \"npm run build && npm run start\"",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "author": "saitho",
+  "license": "MIT",
+  "dependencies": {
+    "discord-api-types": "^0.22.0",
+    "discord.js": "^13.0.1",
+    "log4js": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.4.13",
+    "nodemon": "^2.0.12",
+    "typescript": "^4.3.5"
+  }
+}
