@@ -6,8 +6,9 @@ const { token } = require('../config.json')
 // setup logger
 import {configure, getLogger} from "log4js";
 import {Client, Intents} from "discord.js";
-import init from "./lib/command/init";
+import initCommands from "./lib/command/init";
 import path from "path";
+import {Scheduler} from "./lib/tasks/scheduler";
 
 configure({
     appenders: {
@@ -29,21 +30,27 @@ configure({
     categories: { default: { appenders: ["app", "errors"], level: "INFO" } }
 })
 
-const bot = new Client({ intents: [Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS] });
-
-
-bot.once('ready', async (client) => {
-    await init(client, path.join(__dirname, 'commands'))
-
-    await client.user.setPresence({
+const bot = new Client({
+    intents: [Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS],
+    presence: {
+        status: "online",
         activities: [
             {
-                name: "Some like it bot",
-                type: ActivityType.Watching
+                name: "Overwatch Soundtracks",
+                type: ActivityType.Listening
             }
         ]
-    })
-    await client.user.setStatus("idle")
+    }
+});
+
+// Start scheduler
+Scheduler.getInstance()
+    .setWorkerDirectory(path.resolve(__dirname, 'workers'))
+    .start();
+
+bot.once('ready', async (client) => {
+    await initCommands(client, path.join(__dirname, 'commands'))
+
     getLogger().info(`${client.user.username} is online!`);
     console.log(`${client.user.username} is online!`);
 })
