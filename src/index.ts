@@ -9,6 +9,8 @@ import {Client, Intents} from "discord.js";
 import initCommands from "./lib/command/init";
 import path from "path";
 import {Scheduler} from "./lib/tasks/scheduler";
+import db from "./lib/database/database";
+import {createTaskFromDatabaseRow} from "./lib/tasks/task";
 
 configure({
     appenders: {
@@ -50,6 +52,13 @@ Scheduler.getInstance()
 
 bot.once('ready', async (client) => {
     await initCommands(client, path.join(__dirname, 'commands'))
+
+    // Load tasks from database
+    const rows = db.prepare('SELECT * FROM scheduler_tasks WHERE enabled = 1').all();
+    for (const row of rows) {
+        await Scheduler.getInstance().schedule(createTaskFromDatabaseRow(row), false);
+    }
+    getLogger().info(`Loaded ${rows.length} tasks from database.`);
 
     getLogger().info(`${client.user.username} is online!`);
     console.log(`${client.user.username} is online!`);

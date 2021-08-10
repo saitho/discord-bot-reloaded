@@ -2,6 +2,7 @@ import {getLogger} from "log4js";
 import {Task} from "./task";
 import Bree from "bree";
 import path from "path";
+import db from "../database/database";
 
 export class Scheduler {
     private static instance: Scheduler;
@@ -30,18 +31,40 @@ export class Scheduler {
         await this.bree.stop();
     }
 
-    public async unschedule(taskId: string) {
+    public async unschedule(taskId: string, persist = true) {
         for (const job of this.getAllJobs(taskId)) {
             await this.bree.remove(job.name);
         }
+        if (persist) {
+            const insert = db.prepare("DELETE FROM scheduler_tasks WHERE id = ?");
+            insert.run([taskId]);
+        }
     }
 
-    public async schedule(task: Task) {
+    public async schedule(task: Task, persist = true): Promise<boolean> {
         getLogger().debug('Scheduling task', task)
+
+        if (persist) {
+            // Check if task already is persisted
+            const row = db.prepare('SELECT * FROM scheduler_tasks WHERE id = ?').get(task.id);
+            if (row !== undefined) {
+                getLogger().error('Unable to schedule task');
+                return false;
+            }
+        }
 
         if (this.hasJobScheduled(task.id)) {
             // remove old task before rescheduling it
-            await this.unschedule(task.id);
+            await this.unschedule(task.id, persist);
+        }
+
+        if (persist) {
+            const insert = db.prepare("INSERT INTO scheduler_tasks (id, execution_time, execution_time_mode, worker_file, data, enabled) VALUES (?, ?, ?, ?, ?, ?)");
+            insert.run(task.id, task.executionTime, task.executionTimeMode, task.workerFile, task.data, Number(task.enabled));
+        }
+
+        if (!task.enabled) {
+            return true;
         }
 
         const times = task.executionTime.split(';');
@@ -61,6 +84,7 @@ export class Scheduler {
             this.bree.add(job);
             this.bree.start(jobId);
         }
+        return true;
     }
 
     /**
