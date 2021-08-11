@@ -1,6 +1,7 @@
 import {CommandInteraction, MessageActionRow} from "discord.js";
 import AbstractCommand from "../lib/command/command";
-import {command, group, name, description, option} from "../lib/command/decorators";
+import {command, description, group, name, option} from "../lib/command/decorators";
+import {Scheduler} from "../lib/tasks/scheduler";
 
 @command('dynchannel', 'Show dynamic data (e.g. number of members) in a channel name')
 export default class DynChannelCommand extends AbstractCommand {
@@ -13,7 +14,7 @@ export default class DynChannelCommand extends AbstractCommand {
     @name('twitter-followers')
     @description('Display number of Twitter followers in header')
     @option('twittername', 'Name of the Twitter account', 3, true)
-    @option('channel', 'Channel Name (default: channel where the command is posted', 7)
+    @option('channel', 'Channel ID (should be a voice channel)', 3, true)
     @option('label', 'Override label displayed in channel name. %d will print the number of followers', 3)
     protected async setup_twitterFollowers(interaction: CommandInteraction) {
         const twitterName = interaction.options.getString('twittername')!
@@ -21,10 +22,12 @@ export default class DynChannelCommand extends AbstractCommand {
 
         await this.setupDynamicChannelHeader(
             interaction,
-            'setupTwitter',
+            'twitterFollowers',
             'Twitter Followers: %d',
             `Do you really want to show the **Twitter followers** of Twitter user **${twitterName}** in the title of channel %s?`,
-            `Preview (assuming _${twitterName}_ has %s followers):`
+            `Preview (assuming _${twitterName}_ has %s followers):`,
+            123,
+            { user: twitterName }
         )
     }
 
@@ -36,7 +39,7 @@ export default class DynChannelCommand extends AbstractCommand {
     @group('setup')
     @name('guild-members')
     @description('Display number of guild members in header')
-    @option('channel', 'Channel Name (default: channel where the command is posted', 7)
+    @option('channel', 'Channel ID (should be a voice channel)', 3, true)
     @option('label', 'Override label displayed in channel name. %d will print the number of followers', 3)
     protected async setup_guildMembers(interaction: CommandInteraction) {
         if (!interaction.inGuild()) {
@@ -50,7 +53,7 @@ export default class DynChannelCommand extends AbstractCommand {
         const memberCount = (await interaction.guild!.members.fetch()).size
         await this.setupDynamicChannelHeader(
             interaction,
-            'setupMembers',
+            'guildMembers',
             'Members: %d',
             `Do you really want to show the number of members on this Discord server in the title of channel %s?`,
             `Preview (assuming server has %s members):`,
@@ -84,28 +87,51 @@ export default class DynChannelCommand extends AbstractCommand {
 
     protected async setupDynamicChannelHeader(
         interaction: CommandInteraction,
-        buttonGroupName: string,
+        type: string,
         defaultLabel: string,
         confirmText = 'Do you really want to update the title of channel %s automatically?',
         previewText = 'Preview:',
-        sampleValue = 123
+        sampleValue = 123,
+        data: any = {},
+        updateIntervalMinutes = 5
     ) {
-        let channelId = interaction.channelId;
-        if (interaction.options.getChannel('channel')) {
-            channelId = interaction.options.getChannel('channel')!.id
-        }
+        const buttonGroupName = `dynchannel-${type}`;
+        const channelId = interaction.options.getString('channel')
         const label = interaction.options.getString('label') ?? defaultLabel;
+
+        const schedulerTaskId = `dynchannel-${interaction.guildId}-${channelId}`;
+        const persistedTask = Scheduler.getInstance().getPersistedTask(schedulerTaskId);
+        if (persistedTask) {
+            await interaction.reply({ embeds: [{
+                    color: 'RED',
+                    title: 'Oops, an error occurred.',
+                    description: 'This channel already has a dynchannel configuration.'
+                }], ephemeral: true });
+            return;
+        }
 
         const acceptButton = this.createNewButton(
             'accept',
             'Accept',
             'PRIMARY',
             async (interaction) => {
-                // todo: queue channel updater
+                await Scheduler.getInstance().scheduleTask({
+                    id: schedulerTaskId,
+                    enabled: true,
+                    executionTime: `every ${updateIntervalMinutes} minutes`,
+                    executionTimeMode: "interval",
+                    workerFile: `dynchannel-update-${type}.js`,
+                    guildId: interaction.guildId,
+                    targetChannelId: channelId,
+                    data: JSON.stringify({
+                        label: label,
+                        additionalData: data,
+                    })
+                });
                 await interaction.reply({ embeds: [{
-                        title: 'Setup completed',
-                        description: `The title of channel <#${channelId}> will now be updated regularly.`
-                    }], ephemeral: true });
+                    title: 'Setup completed',
+                    description: `The title of voice channel <#${channelId}> will now be updated regularly.`
+                }], ephemeral: true });
             },
             buttonGroupName
         );
