@@ -149,4 +149,25 @@ export class Scheduler {
     public hasJobScheduled(id: string): boolean {
         return this.getAllJobs(id).length > 0;
     }
+
+    /**
+     * @param id
+     * @return boolean
+     */
+    public hasJobPersisted(id: string): boolean {
+        const row = db.prepare('SELECT * FROM scheduler_tasks WHERE id = ?').get(id);
+        return row !== undefined;
+    }
+
+    /**
+     * @param id
+     * @return Task|null
+     */
+    public getPersistedTask(id: string): Task|null {
+        const row = db.prepare('SELECT * FROM scheduler_tasks WHERE id = ?').get(id);
+        if (row === undefined) {
+            return null;
+        }
+        return createTaskFromDatabaseRow(row);
+    }
 }
