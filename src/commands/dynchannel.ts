@@ -123,6 +123,7 @@ export default class DynChannelCommand extends AbstractCommand {
                     workerFile: `dynchannel-update-${type}.js`,
                     guildId: interaction.guildId,
                     targetChannelId: channelId,
+                    executeImmediately: true,
                     data: JSON.stringify({
                         label: label,
                         additionalData: data,

@@ -4,6 +4,7 @@ specifiers:
   '@types/better-sqlite3': ^5.4.3
   '@types/bree': ^6.2.1
   '@types/node': ^16.4.13
+  axios: ^0.21.1
   better-sqlite3: ^7.4.3
   bree: ^6.2.1
   discord-api-types: ^0.22.0
@@ -13,7 +14,7 @@ specifiers:
   typescript: ^4.3.5
 
 dependencies:
-  '@types/better-sqlite3': 5.4.3
+  axios: 0.21.1
   better-sqlite3: 7.4.3
   bree: 6.2.1
   discord-api-types: 0.22.0
@@ -21,6 +22,7 @@ dependencies:
   log4js: 6.3.0
 
 devDependencies:
+  '@types/better-sqlite3': 5.4.3
   '@types/bree': 6.2.1
   '@types/node': 16.4.13
   nodemon: 2.0.12
@@ -91,7 +93,7 @@ packages:
     resolution: {integrity: sha512-d4T8Htgz3sQL3u5oVwkWipZLBYUooKEA4fhU9Sp4F6VDIhifQo1NR/IDtnAIID0Y9IXV3TQnNhv6S+m8TnkEdg==}
     dependencies:
       '@types/integer': 4.0.1
-    dev: false
+    dev: true
 
   /@types/bree/6.2.1:
     resolution: {integrity: sha512-JPFIGocGQKQvvlIVC0UwZmmCra07fYUOqWOdxvCt87qmYq+ApSWSc2aYl8DoEwMP3LlkB0aqTUVCLu2dv1SYdw==}
@@ -101,7 +103,7 @@ packages:
 
   /@types/integer/4.0.1:
     resolution: {integrity: sha512-QQojPymFcV1hrvWXA1h0pP9RmFBFNuWikZcUEjjVsS19IyKO+jqOX24lp2ZHF4A21EmkosJhJDX7CLG67F2s7A==}
-    dev: false
+    dev: true
 
   /@types/lodash/4.14.172:
     resolution: {integrity: sha512-/BHF5HAx3em7/KkzVKm3LrsD6HZAXuXO1AJZQ3cRRBZj4oHZDviWPYu0aEplAqDFNHZPW6d3G7KN+ONcCCC7pw==}
@@ -169,6 +171,14 @@ packages:
 
   /asynckit/0.4.0:
     resolution: {integrity: sha1-x57Zf380y48robyXkLzDZkdLS3k=}
+    dev: false
+
+  /axios/0.21.1:
+    resolution: {integrity: sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==}
+    dependencies:
+      follow-redirects: 1.14.1
+    transitivePeerDependencies:
+      - debug
     dev: false
 
   /balanced-match/1.0.2:
@@ -565,6 +575,16 @@ packages:
 
   /flatted/2.0.2:
     resolution: {integrity: sha512-r5wGx7YeOwNWNlCA0wQ86zKyDLMQr+/RB8xy74M4hTphfmjlijTSSXGuH8rnvKZnfT9i+75zmd8jcKdMR4O6jA==}
+    dev: false
+
+  /follow-redirects/1.14.1:
+    resolution: {integrity: sha512-HWqDgT7ZEkqRzBvc2s64vSZ/hfOceEol3ac/7tKwzuvEyWx3/4UegXh5oBOIotkGsObyk3xznnSRVADBgWSQVg==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
     dev: false
 
   /fs-constants/1.0.0:

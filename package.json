@@ -9,6 +9,7 @@
   "author": "saitho",
   "license": "MIT",
   "dependencies": {
+    "axios": "^0.21.1",
     "better-sqlite3": "^7.4.3",
     "bree": "^6.2.1",
     "discord-api-types": "^0.22.0",

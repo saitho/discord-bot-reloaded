@@ -1,3 +1,4 @@
 {
-    "token": "SET-YOUR-TOKEN-HERE"
+    "token": "SET-YOUR-TOKEN-HERE",
+    "twitterToken": "SET-YOUR-TWITTER-BEARER-TOKEN-HERE"
 }
