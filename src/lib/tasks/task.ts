@@ -9,8 +9,8 @@ export interface Task {
      * @var string[] user defined labels for identifying tasks
      */
     labels?: string[];
-    guildId?: string;
-    targetChannelId?: string;
+    guildId?: string|null;
+    targetChannelId?: string|null;
 }
 
 export function createTaskFromDatabaseRow(data: any): Task {
