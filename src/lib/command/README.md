@@ -80,7 +80,7 @@ Placed at public methods. Provides available options to the command.
 @option((string)'NAME', (string)'DESCRIPTION', (number)TYPE, (bool)REQUIRED=false, (array)CHOICES=[])
 ```
 
-TYPE is the command option type number (see [Discord docs](https://discord.com/developers/docs/interactions/slash-commands#application-command-object-application-command-option-type)).
+TYPE is the command option type number (see [Discord docs](https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type)).
 
 ## Buttons
 
