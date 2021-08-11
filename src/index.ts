@@ -56,7 +56,7 @@ bot.once('ready', async (client) => {
     // Load tasks from database
     const rows = db.prepare('SELECT * FROM scheduler_tasks WHERE enabled = 1').all();
     for (const row of rows) {
-        await Scheduler.getInstance().schedule(createTaskFromDatabaseRow(row), false);
+        await Scheduler.getInstance().scheduleTask(createTaskFromDatabaseRow(row), false);
     }
     getLogger().info(`Loaded ${rows.length} tasks from database.`);
 

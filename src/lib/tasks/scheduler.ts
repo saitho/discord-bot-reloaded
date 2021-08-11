@@ -1,15 +1,25 @@
 import {getLogger} from "log4js";
-import {Task} from "./task";
+import {createTaskFromDatabaseRow, Task} from "./task";
 import Bree from "bree";
 import path from "path";
 import db from "../database/database";
+
+export const ACTION_DISABLE_TASK = 'disable_task';
+export const ACTION_REMOVE_TASK = 'remove_task';
 
 export class Scheduler {
     private static instance: Scheduler;
 
     protected workerDirectory: string = '';
 
-    private bree = new Bree({ root: false });
+    private bree = new Bree({ root: false, workerMessageHandler: async (response) => {
+        const originalName = response.name.replace(/(.*)_\d+/, `$1`);
+        if (response.message === ACTION_DISABLE_TASK) {
+            await this.pauseTask(originalName)
+        } else if (response.message === ACTION_REMOVE_TASK) {
+            await this.unscheduleTask(originalName);
+        }
+    } });
 
     public static getInstance(): Scheduler {
         if (!Scheduler.instance) {
@@ -31,36 +41,69 @@ export class Scheduler {
         await this.bree.stop();
     }
 
-    public async unschedule(taskId: string, persist = true) {
+    public async unpauseTask(taskId: string, persist = true) {
+        // Look for task in database
+        const row = db.prepare('SELECT * FROM scheduler_tasks WHERE id = ?').get(taskId);
+        if (row === undefined) {
+            getLogger().error('Unable to locate task with ID ' + taskId + ' in database.');
+            return null;
+        }
+        const task = createTaskFromDatabaseRow(row);
+        await this.scheduleTask(task, false);
+        if (persist) {
+            const stmt = db.prepare("UPDATE scheduler_tasks SET enabled = 1 WHERE id = ?");
+            stmt.run([taskId]);
+        }
+    }
+
+    public async pauseTask(taskId: string, persist = true) {
+        await this.unscheduleTask(taskId, false);
+        if (persist) {
+            const stmt = db.prepare("UPDATE scheduler_tasks SET enabled = 0 WHERE id = ?");
+            stmt.run([taskId]);
+        }
+    }
+
+    public async unscheduleTask(taskId: string, persist = true) {
         for (const job of this.getAllJobs(taskId)) {
             await this.bree.remove(job.name);
         }
         if (persist) {
-            const insert = db.prepare("DELETE FROM scheduler_tasks WHERE id = ?");
-            insert.run([taskId]);
+            const stmt = db.prepare("DELETE FROM scheduler_tasks WHERE id = ?");
+            stmt.run([taskId]);
         }
     }
 
-    public async schedule(task: Task, persist = true): Promise<boolean> {
+    public async scheduleTask(task: Task, persist = true): Promise<boolean> {
         getLogger().debug('Scheduling task', task)
 
         if (persist) {
             // Check if task already is persisted
             const row = db.prepare('SELECT * FROM scheduler_tasks WHERE id = ?').get(task.id);
             if (row !== undefined) {
-                getLogger().error('Unable to schedule task');
+                getLogger().error('Unable to persist scheduled task as task already exists');
                 return false;
             }
         }
 
         if (this.hasJobScheduled(task.id)) {
             // remove old task before rescheduling it
-            await this.unschedule(task.id, persist);
+            await this.unscheduleTask(task.id, persist);
         }
 
         if (persist) {
-            const insert = db.prepare("INSERT INTO scheduler_tasks (id, execution_time, execution_time_mode, worker_file, data, enabled) VALUES (?, ?, ?, ?, ?, ?)");
-            insert.run(task.id, task.executionTime, task.executionTimeMode, task.workerFile, task.data, Number(task.enabled));
+            const insert = db.prepare("INSERT INTO scheduler_tasks (id, execution_time, execution_time_mode, worker_file, data, enabled, labels, guild_id, target_channel_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            insert.run(
+                task.id,
+                task.executionTime,
+                task.executionTimeMode,
+                task.workerFile,
+                task.data,
+                Number(task.enabled),
+                JSON.stringify(task.labels),
+                task.guildId,
+                task.targetChannelId
+            );
         }
 
         if (!task.enabled) {
@@ -74,7 +117,11 @@ export class Scheduler {
             const job: any = {
                 name: jobId,
                 path: path.join(this.workerDirectory, task.workerFile),
-                worker: { workerData: task.data ?? null }
+                worker: { workerData: {
+                    data: task.data ?? null,
+                    guild_id: task.guildId,
+                    target_channel_id: task.targetChannelId,
+                }}
             };
             if (task.executionTimeMode === "cron") {
                 job.cron = executionTime;
