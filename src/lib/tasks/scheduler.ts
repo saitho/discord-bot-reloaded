@@ -131,6 +131,9 @@ export class Scheduler {
             this.bree.add(job);
             this.bree.start(jobId);
         }
+        if (task.executeImmediately) {
+            this.bree.run(task.id + '_' + 0);
+        }
         return true;
     }
 

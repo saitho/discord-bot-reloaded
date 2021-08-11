@@ -5,6 +5,7 @@ export interface Task {
     workerFile: string;
     data: string;
     enabled: boolean;
+    executeImmediately?: boolean;
     /**
      * @var string[] user defined labels for identifying tasks
      */
