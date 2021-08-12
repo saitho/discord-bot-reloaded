@@ -77,21 +77,15 @@ export class Scheduler {
     public async scheduleTask(task: Task, persist = true): Promise<boolean> {
         getLogger().debug('Scheduling task', task)
 
-        if (persist) {
-            // Check if task already is persisted
-            const row = db.prepare('SELECT * FROM scheduler_tasks WHERE id = ?').get(task.id);
-            if (row !== undefined) {
-                getLogger().error('Unable to persist scheduled task as task already exists');
-                return false;
-            }
-        }
-
         if (this.hasJobScheduled(task.id)) {
             // remove old task before rescheduling it
             await this.unscheduleTask(task.id, persist);
         }
 
         if (persist) {
+            // Ensure task was removed before creating a new one in case of rescheduling
+            db.prepare('DELETE FROM scheduler_tasks WHERE id = ?').run(task.id);
+
             const insert = db.prepare("INSERT INTO scheduler_tasks (id, execution_time, execution_time_mode, worker_file, data, enabled, labels, guild_id, target_channel_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             insert.run(
                 task.id,
