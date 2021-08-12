@@ -1,4 +1,4 @@
-import {CommandInteraction, MessageActionRow} from "discord.js";
+import {CommandInteraction, DiscordAPIError, MessageActionRow} from "discord.js";
 import AbstractCommand from "../lib/command/command";
 import {command, description, group, name, option} from "../lib/command/decorators";
 import {Scheduler} from "../lib/tasks/scheduler";
@@ -68,7 +68,7 @@ export default class DynChannelCommand extends AbstractCommand {
      */
     @name('teardown')
     @description('Remove dynamic settings for a channel')
-    @option('channel', 'Channel Name (default: channel where the command is posted', 7)
+    @option('channel', 'Channel ID', 3, true)
     protected async teardown(interaction: CommandInteraction) {
         if (!interaction.inGuild()) {
             await interaction.reply({ embeds: [{
@@ -78,11 +78,64 @@ export default class DynChannelCommand extends AbstractCommand {
                 }], ephemeral: true });
             return;
         }
+        const channelId = interaction.options.getString('channel')!
+
+        // Validate channel exists on server
+        try {
+            await interaction.client.channels.fetch(channelId!)
+        } catch (e) {
+            let message = `There is no channel on this server with id ${channelId}.`;
+            if (e.code === 50001) {
+                message = `I was unable to access the channel list. Please contact the server owner.`
+            }
+            await interaction.reply({ embeds: [{
+                    color: 'RED',
+                    title: 'Oops, an error occurred.',
+                    description: message
+                }], ephemeral: true });
+            return;
+        }
+
+        const task = Scheduler.getInstance().findPersistedTaskByChannel(interaction.guildId, channelId, ['dynchannel']);
+        if (!task) {
+            await interaction.reply({ embeds: [{
+                    color: 'RED',
+                    title: 'Oops, an error occurred.',
+                    description: 'The channel does not have a dynchannel setup that could be removed.'
+                }], ephemeral: true });
+            return;
+        }
+
+        const acceptButton = this.createNewButton(
+            'accept',
+            'Accept',
+            'PRIMARY',
+            async (interaction) => {
+                await Scheduler.getInstance().unscheduleTask(task.id);
+                await interaction.reply({ embeds: [{
+                        title: 'Teardown completed',
+                        description: `The title of voice channel <#${channelId}> will not be updated anymore.`
+                    }], ephemeral: true });
+            },
+            'teardown'
+        );
+        const abortButton = this.createNewButton(
+            'abort',
+            'Abort',
+            'SECONDARY',
+            async (interaction) => {
+                await interaction.reply({ content: 'Teardown aborted.', ephemeral: true });
+            },
+            'teardown'
+        );
+
+        const row = new MessageActionRow().addComponents(acceptButton, abortButton);
+
         await interaction.reply({ embeds: [{
-                color: 'GREEN',
-                title: 'Foobar',
-                description: 'Foobar'
-            }], ephemeral: true });
+                title: 'Please confirm your setting',
+                description: `Are you sure you want to remove dynchannel settings on channel <#${channelId}>?`
+            }], components: [row], ephemeral: true });
+        this.createTimeoutForGroup(30, 'teardown')
     }
 
     protected async setupDynamicChannelHeader(
@@ -95,9 +148,34 @@ export default class DynChannelCommand extends AbstractCommand {
         data: any = {},
         updateIntervalMinutes = 5
     ) {
+        if (!interaction.inGuild()) {
+            await interaction.reply({ embeds: [{
+                    color: 'RED',
+                    title: 'Oops, an error occurred.',
+                    description: 'This command can not be used outside of Discord servers.'
+                }], ephemeral: true });
+            return;
+        }
+
         const buttonGroupName = `dynchannel-${type}`;
         const channelId = interaction.options.getString('channel')
         const label = interaction.options.getString('label') ?? defaultLabel;
+
+        // Validate channel exists on server
+        try {
+            await interaction.client.channels.fetch(channelId!)
+        } catch (e) {
+            let message = `There is no channel on this server with id ${channelId}.`;
+            if (e.code === 50001) {
+                message = `I was unable to access the channel list. Please contact the server owner.`
+            }
+            await interaction.reply({ embeds: [{
+                    color: 'RED',
+                    title: 'Oops, an error occurred.',
+                    description: message
+                }], ephemeral: true });
+            return;
+        }
 
         const schedulerTaskId = `dynchannel-${interaction.guildId}-${channelId}`;
         const persistedTask = Scheduler.getInstance().getPersistedTask(schedulerTaskId);
@@ -124,6 +202,7 @@ export default class DynChannelCommand extends AbstractCommand {
                     guildId: interaction.guildId,
                     targetChannelId: channelId,
                     executeImmediately: true,
+                    labels: ['dynchannel'],
                     data: JSON.stringify({
                         label: label,
                         additionalData: data,

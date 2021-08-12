@@ -173,4 +173,23 @@ export class Scheduler {
         }
         return createTaskFromDatabaseRow(row);
     }
+
+    /**
+     * @param guildId
+     * @param targetChannelId
+     * @param groups
+     * @return Task|null
+     */
+    public findPersistedTaskByChannel(guildId: string, targetChannelId: string, groups: string[] = []): Task|null {
+        const row = db.prepare('SELECT * FROM scheduler_tasks WHERE guild_id = ? AND target_channel_id = ?').get(guildId, targetChannelId)
+        if (!row) {
+            return null;
+        }
+        const task = createTaskFromDatabaseRow(row);
+
+        if (groups.length && (!task.labels || groups.every(val => task.labels!.includes(val)))) {
+            return null;
+        }
+        return task;
+    }
 }

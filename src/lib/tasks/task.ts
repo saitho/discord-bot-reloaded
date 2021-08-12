@@ -20,7 +20,7 @@ export function createTaskFromDatabaseRow(data: any): Task {
         executionTime: data.execution_time,
         executionTimeMode: data.execution_time_mode,
         workerFile: data.worker_file,
-        labels: JSON.parse(data.labels),
+        labels: data.labels ? JSON.parse(data.labels) : [],
         guildId: data.guild_id,
         targetChannelId: data.target_channel_id,
         data: data.data,
