@@ -2,13 +2,15 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "debug": "nodemon -e js,ts --watch src --exec \"npm run build && npm run start\"",
+    "debug": "nodemon -e js,ts --watch src --ignore src/_versions.ts --exec \"npm run build && npm run start\"",
+    "prebuild": "ts-appversion --pnpm --root=../../..",
     "build": "tsc",
     "start": "node dist/index.js"
   },
   "author": "saitho",
   "license": "MIT",
   "dependencies": {
+    "@saithodev/ts-appversion": "^2.2.0",
     "axios": "^0.21.1",
     "better-sqlite3": "^7.4.3",
     "bree": "^6.2.1",

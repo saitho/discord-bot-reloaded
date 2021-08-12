@@ -11,6 +11,7 @@ import path from "path";
 import {Scheduler} from "./lib/tasks/scheduler";
 import db from "./lib/database/database";
 import {createTaskFromDatabaseRow} from "./lib/tasks/task";
+import versions from "./_versions";
 
 configure({
     appenders: {
@@ -38,8 +39,9 @@ const bot = new Client({
         status: "online",
         activities: [
             {
-                name: "Overwatch Soundtracks",
-                type: ActivityType.Listening
+                name: `Version ${versions.versionLong}`,
+                type: ActivityType.Streaming,
+                url: "https://github.com/saitho/discord-bot-reloaded"
             }
         ]
     }

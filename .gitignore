@@ -4,6 +4,7 @@ node_modules/
 # do not commit config.json as it may contain sensitive data
 config.json
 database.db
+src/_versions.ts
 
 log
 .idea
