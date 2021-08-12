@@ -1,4 +1,4 @@
-import {CommandInteraction, DiscordAPIError, MessageActionRow} from "discord.js";
+import {CommandInteraction, MessageActionRow, MessageEmbedOptions} from "discord.js";
 import AbstractCommand from "../lib/command/command";
 import {command, description, group, name, option} from "../lib/command/decorators";
 import {Scheduler} from "../lib/tasks/scheduler";
@@ -178,15 +178,6 @@ export default class DynChannelCommand extends AbstractCommand {
         }
 
         const schedulerTaskId = `dynchannel-${interaction.guildId}-${channelId}`;
-        const persistedTask = Scheduler.getInstance().getPersistedTask(schedulerTaskId);
-        if (persistedTask) {
-            await interaction.reply({ embeds: [{
-                    color: 'RED',
-                    title: 'Oops, an error occurred.',
-                    description: 'This channel already has a dynchannel configuration.'
-                }], ephemeral: true });
-            return;
-        }
 
         const acceptButton = this.createNewButton(
             'accept',
@@ -227,16 +218,32 @@ export default class DynChannelCommand extends AbstractCommand {
 
         const row = new MessageActionRow().addComponents(acceptButton, abortButton);
 
-        await interaction.reply({ embeds: [{
-                title: 'Please confirm your setting',
-                description: `${confirmText.replace('%s', `<#${channelId}>`)}
+        let messageEmbed: MessageEmbedOptions = {
+            title: 'Please confirm your setting',
+            description: `${confirmText.replace('%s', `<#${channelId}>`)}
             
             ${previewText.replace('%s', sampleValue.toString())}
             \`\`\`${label.replace('%d', sampleValue.toString())}\`\`\`
             This will override and replace the current channel name.
             
             (Note: Please make a selection within 30 seconds.)`
-            }], components: [row], ephemeral: true });
+        };
+        if (Scheduler.getInstance().getPersistedTask(schedulerTaskId)) {
+            messageEmbed = {
+                color: 'YELLOW',
+                title: 'Your attention is required.',
+                description: `This channel already has a different dynchannel configuration.
+                    
+                    ${confirmText.replace('%s', `<#${channelId}>`)}
+            
+            ${previewText.replace('%s', sampleValue.toString())}
+            \`\`\`${label.replace('%d', sampleValue.toString())}\`\`\`
+            This will replace the old dynchannel configuration.
+            
+            (Note: Please make a selection within 30 seconds.)`
+            };
+        }
+        await interaction.reply({ embeds: [messageEmbed], components: [row], ephemeral: true });
         this.createTimeoutForGroup(30, buttonGroupName)
     }
 }
