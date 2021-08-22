@@ -67,10 +67,16 @@ export default class CommandLoader {
             return 0;
         });
 
+        let defaultPermissions = true;
+        if (subcommand.disablePermissions ?? false) {
+            defaultPermissions = false;
+        }
+
         return {
             "type": InternalCommandOption.SUB_COMMAND,
             "name": subcommand.name,
             "description": subcommand.description,
+            "default_permission": defaultPermissions,
             "choices": subcommand.choices,
             "options": options
         }

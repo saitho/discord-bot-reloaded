@@ -31,6 +31,15 @@ export function name(name: string) {
     };
 }
 
+export function disablePermissions(disablePermissions: boolean) {
+    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+        target[SubMethods] = target[SubMethods] || new Map();
+        const obj = target[SubMethods].get(propertyKey) ?? {};
+        obj.disablePermissions = disablePermissions;
+        target[SubMethods].set(propertyKey, obj);
+    };
+}
+
 export function group(group: string) {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         target[SubMethods] = target[SubMethods] || new Map();
