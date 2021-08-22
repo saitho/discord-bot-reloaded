@@ -28,6 +28,6 @@ The bot requires **administrator** permissions in order to access the channel of
 ### Features
 
 * **Dynamic channel names**:  Display dynamic information in your channel names. This works best with voice channels.
-** What data can be displayed?
-*** Current number of users on your Discord server
-*** Current followers of a Twitter account
+  * What data can be displayed?
+    * Current number of users on your Discord server
+    * Current followers of a Twitter account
