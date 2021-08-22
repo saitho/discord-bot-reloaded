@@ -51,7 +51,7 @@ export default class CommandLoader {
 
     protected createCommandJson(subcommand: ISubCommand) {
         let options: any[] = [];
-        for (const opt of subcommand.options) {
+        for (const opt of subcommand.options ?? []) {
             options.push({
                 name: opt.name,
                 description: opt.description,
@@ -120,7 +120,10 @@ export default class CommandLoader {
     }
 
     public async publishCommands() {
-        getLogger().info('Publishing commands to Discord.');
-        await this.client.application!.commands.set(this.buildDiscordCommandJson())
+        const commandsJson = this.buildDiscordCommandJson();
+        const commandNames = commandsJson.map((cmd) => cmd.name);
+        getLogger().info('Publishing commands to Discord: ' + commandNames.join(', '));
+        console.log('Publishing commands to Discord: ' + commandNames.join(', '));
+        await this.client.application!.commands.set(commandsJson)
     }
 }
