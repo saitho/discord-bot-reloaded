@@ -1,4 +1,7 @@
 {
     "token": "SET-YOUR-TOKEN-HERE",
-    "twitterToken": "SET-YOUR-TWITTER-BEARER-TOKEN-HERE"
+    "twitterToken": "SET-YOUR-TWITTER-BEARER-TOKEN-HERE",
+    "enabledCommands": [
+        "dynchannel"
+    ]
 }

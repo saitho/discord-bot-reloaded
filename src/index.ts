@@ -1,7 +1,7 @@
 // Do not use "import" syntax so this file is not needed during build!
 import { ActivityType } from 'discord-api-types/payloads/v9';
 
-const { token } = require('../config.json')
+const { token, enabledCommands } = require('../config.json')
 
 // setup logger
 import {configure, getLogger} from "log4js";
@@ -53,7 +53,14 @@ Scheduler.getInstance()
     .start();
 
 bot.once('ready', async (client) => {
-    await initCommands(client, path.join(__dirname, 'commands'))
+    await initCommands(client, {
+        commandPath: path.join(__dirname, 'commands'),
+        includeCommands: enabledCommands ?? []
+    })
+    if (process.env.PREVIEW_COMMANDS) {
+        bot.destroy();
+        return;
+    }
 
     // Load tasks from database
     const rows = db.prepare('SELECT * FROM scheduler_tasks WHERE enabled = 1').all();
