@@ -4,6 +4,7 @@ import AbstractCommand, {ISubCommand} from "./command";
 import {ApplicationCommandData, Client, CommandInteraction} from "discord.js";
 import {ButtonInteractionHandler} from "./button_interaction_handler";
 import {getLogger} from "log4js";
+import {InternalCommandOption} from "./types";
 
 export default class CommandLoader {
     protected client: Client;
@@ -67,7 +68,7 @@ export default class CommandLoader {
         });
 
         return {
-            "type": 1, // Sub command
+            "type": InternalCommandOption.SUB_COMMAND,
             "name": subcommand.name,
             "description": subcommand.description,
             "choices": subcommand.choices,
@@ -96,7 +97,7 @@ export default class CommandLoader {
 
             groups.forEach((value: any, key: string) => {
                 mainCommandOptions.push({
-                    "type": 2, // Sub command group
+                    "type": InternalCommandOption.SUB_COMMAND_GROUP,
                     "name": key,
                     "description": "Command " + key,
                     "options": value
