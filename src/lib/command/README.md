@@ -9,10 +9,22 @@ where the command classes are stored.
 ```typescript
 import init from "./lib/command/init";
 
-// Load all commands from ./commands directory.
+// Load all commands from ./commands directory, but not /disabledCommand.
 // This will create all required classes and attach to interaction events from Discord client.
-await init(client, path.join(__dirname, 'commands'))
+await init(client, {
+    commandPath: path.join(__dirname, 'commands'),
+    excludeCommands: ['disabledCommand']
+})
+
+// Load commands /commandA and /commandB from ./commands directory.
+// This will create all required classes and attach to interaction events from Discord client.
+await init(client, {
+    commandPath: path.join(__dirname, 'commands'),
+    includeCommands: ['commandA', 'commandB']
+})
 ```
+
+Note: Only one of `includeCommands` and `excludeCommands` may be set. If none is set, all commands in `commandPath` will be loaded.
 
 ## Command classes
 

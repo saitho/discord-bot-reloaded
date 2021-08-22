@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import AbstractCommand, {ISubCommand} from "./command";
-import {Client, CommandInteraction} from "discord.js";
+import {ApplicationCommandData, Client, CommandInteraction} from "discord.js";
 import {ButtonInteractionHandler} from "./button_interaction_handler";
 import {getLogger} from "log4js";
 
@@ -24,7 +24,10 @@ export default class CommandLoader {
         await cmd.processInteraction(interaction);
     }
 
-    public loadCommands(directory: string) {
+    public loadCommands(directory: string, excludeCommands: string[] = [], includeCommands: string[] = []) {
+        if (excludeCommands.length > 0 && includeCommands.length > 0) {
+            throw new Error("Only one of excludeCommands and includeCommands setting may be set.");
+        }
         const client = this.client;
         const buttonHandler = this.buttonHandler;
         fs.readdirSync(directory)
@@ -32,6 +35,13 @@ export default class CommandLoader {
                 const include = require(path.join(directory, file))
                 const instance = new (include.default)(client, buttonHandler)
                 if (!(instance instanceof AbstractCommand)) {
+                    return;
+                }
+                if (excludeCommands.length > 0 && excludeCommands.includes(instance.getCommandName())) {
+                    // file is in excludeCommands list
+                    return;
+                } else if (includeCommands.length > 0 && !includeCommands.includes(instance.getCommandName())) {
+                    // file is not in includeCommands list
                     return;
                 }
                 this.commands.set(instance.getCommandName(), instance);
@@ -65,7 +75,7 @@ export default class CommandLoader {
         }
     }
 
-    public async publishCommands() {
+    public buildDiscordCommandJson(): ApplicationCommandData[] {
         const commands: any[] = [];
 
         for (const cmd of this.commands.values()) {
@@ -99,8 +109,11 @@ export default class CommandLoader {
                 "options": mainCommandOptions
             });
         }
+        return commands;
+    }
 
+    public async publishCommands() {
         getLogger().info('Publishing commands to Discord.');
-        await this.client.application!.commands.set(commands)
+        await this.client.application!.commands.set(this.buildDiscordCommandJson())
     }
 }
